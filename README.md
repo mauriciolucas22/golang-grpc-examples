@@ -2,7 +2,8 @@
 
 # Features!
 
-- Server Streaming
+- Server Stream
+- Client Stream
 
 # Init
 
@@ -37,4 +38,4 @@ brew install protoc-gen-go-grpc -->
 
 <!-- protoc --proto_path=proto proto/_.proto --go_out=pb -->
 
-<!-- protoc --proto*path=proto proto/*.proto --go_out=pb --go-grpc_out=pb -->
+<!-- protoc --proto_path=proto proto/*.proto --go_out=pb --go-grpc_out=pb -->
