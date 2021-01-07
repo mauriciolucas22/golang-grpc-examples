@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/mauriciolucas22/gRPC-examples/pb"
@@ -25,7 +26,8 @@ func main() {
 
 	// AddUser(client)
 	// AddUserVerbose(client)
-	AddUsers(client)
+	// AddUsers(client)
+	AddUserStreamBoth(client)
 }
 
 func AddUser(client pb.UserServiceClient) {
@@ -109,4 +111,57 @@ func AddUsers(client pb.UserServiceClient) {
 	}
 
 	fmt.Println(res)
+}
+
+func AddUserStreamBoth(client pb.UserServiceClient) {
+	stream, err := client.AddUserStreamBoth(context.Background())
+
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+
+	reqs := []*pb.User{}
+
+	for i := 0; i < 10; i++ {
+		reqs = append(reqs, &pb.User{
+			Id:    strconv.Itoa(i),
+			Name:  "Jesus Loves you " + strconv.Itoa(i),
+			Email: "@jesus",
+		})
+	}
+
+	wait := make(chan int)
+
+	go func() {
+		for _, req := range reqs {
+			fmt.Println("Sending user:", req.Name)
+			stream.Send(req)
+		}
+
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+
+			if err == io.EOF {
+				fmt.Println("EOF")
+				break
+			}
+
+			if err != nil {
+				log.Fatalf("Error receiving data: %v", err)
+				break
+			}
+
+			fmt.Printf("Received user %v with status %v\n", res.GetUser().GetName(), res.GetStatus())
+		}
+
+		fmt.Println("Finish stream")
+
+		close(wait)
+	}()
+
+	<-wait
 }
