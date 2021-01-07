@@ -10,11 +10,14 @@ import (
 	"github.com/mauriciolucas22/gRPC-examples/pb"
 )
 
-// Copided from pb/user_grpc.pb.go
-// type UserServiceServer interface {
-// 	AddUser(context.Context, *User) (*User, error)
-// 	mustEmbedUnimplementedUserServiceServer()
-// }
+/**
+** pb/user_grpc.pb.go
+	AddUser(context.Context, *User) (*User, error)
+	AddUserVerbose(*User, UserService_AddUserVerboseServer) error
+	AddUsers(UserService_AddUsersServer) error
+	AddUserStreamBoth(UserService_AddUserStreamBothServer) error
+	mustEmbedUnimplementedUserServiceServer()
+*/
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
@@ -98,5 +101,27 @@ func (*UserService) AddUsers(stream pb.UserService_AddUsersServer) error {
 		})
 
 		fmt.Println("Adding", req.GetName())
+	}
+}
+
+func (*UserService) AddUserStreamBoth(stream pb.UserService_AddUserStreamBothServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			log.Fatalf("Error receiving stream from client: %v", err)
+		}
+
+		err = stream.Send(&pb.UserResultStream{
+			Status: "Added",
+			User:   req,
+		})
+
+		if err != nil {
+			log.Fatalf("Error sending stream to the client: %v", err)
+		}
 	}
 }
